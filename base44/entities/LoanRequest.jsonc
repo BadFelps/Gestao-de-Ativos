@@ -1,0 +1,187 @@
+{
+  "name": "LoanRequest",
+  "type": "object",
+  "properties": {
+    "request_number": {
+      "type": "string",
+      "description": "N\u00famero da solicita\u00e7\u00e3o"
+    },
+    "revenda": {
+      "type": "string",
+      "enum": [
+        "MS Paulo Afonso",
+        "MS Delmiro"
+      ],
+      "description": "Revenda"
+    },
+    "pdv_code": {
+      "type": "string"
+    },
+    "razao_social": {
+      "type": "string"
+    },
+    "fantasia": {
+      "type": "string"
+    },
+    "bairro": {
+      "type": "string"
+    },
+    "cidade": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "asset_type": {
+      "type": "string",
+      "description": "Material"
+    },
+    "asset_brand": {
+      "type": "string",
+      "description": "Modelo/Marca"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "voltage": {
+      "type": "string",
+      "enum": [
+        "110v",
+        "220v"
+      ],
+      "description": "Voltagem (para Refrigerador/Chopeira)"
+    },
+    "patrimonio": {
+      "type": "string",
+      "description": "N\u00famero do patrim\u00f4nio (opcional, para Refrigerador/Chopeira)"
+    },
+    "extra_items": {
+      "type": "string",
+      "description": "JSON com todos os itens do pedido"
+    },
+    "observations": {
+      "type": "string"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "Fixo",
+        "Evento",
+        "Recolha"
+      ],
+      "description": "Tipo da solicita\u00e7\u00e3o"
+    },
+    "comodato_type": {
+      "type": "string",
+      "enum": [
+        "Comodato Tempor\u00e1rio",
+        "Comodato Fixo"
+      ],
+      "description": "Tipo de comodato (apenas para Recolha)"
+    },
+    "loan_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de empr\u00e9stimo"
+    },
+    "return_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de recolha"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente_aprovacao_comercial",
+        "aprovado_comercial",
+        "negado_comercial",
+        "pendente_aprovacao_analista",
+        "aprovado_analista",
+        "negado_analista",
+        "pendente",
+        "entregue",
+        "recolhido",
+        "cancelado"
+      ],
+      "default": "pendente_aprovacao_comercial"
+    },
+    "created_by_role": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "created_by_setor": {
+      "type": "string"
+    },
+    "commercial_decision": {
+      "type": "string",
+      "enum": [
+        "",
+        "aprovado",
+        "negado"
+      ],
+      "default": ""
+    },
+    "commercial_decision_by": {
+      "type": "string"
+    },
+    "commercial_decision_date": {
+      "type": "string"
+    },
+    "commercial_denial_reason": {
+      "type": "string"
+    },
+    "analista_decision": {
+      "type": "string",
+      "enum": [
+        "",
+        "aprovado",
+        "negado"
+      ],
+      "default": ""
+    },
+    "analista_decision_by": {
+      "type": "string"
+    },
+    "analista_decision_date": {
+      "type": "string"
+    },
+    "analista_denial_reason": {
+      "type": "string"
+    },
+    "analista_denial_code": {
+      "type": "number"
+    },
+    "analista_denial_codes": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "attachment_url": {
+      "type": "string"
+    },
+    "separation_status": {
+      "type": "string",
+      "enum": [
+        "",
+        "em_andamento",
+        "concluida"
+      ],
+      "default": ""
+    },
+    "separation_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "revenda",
+    "pdv_code",
+    "asset_type",
+    "quantity",
+    "request_type",
+    "loan_date"
+  ]
+}

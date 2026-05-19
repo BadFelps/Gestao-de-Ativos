@@ -1,0 +1,53 @@
+{
+  "name": "Protocolo",
+  "type": "object",
+  "properties": {
+    "cliente_id": {
+      "type": "string",
+      "description": "ID do cliente relacionado"
+    },
+    "razao_social": {
+      "type": "string"
+    },
+    "fantasia": {
+      "type": "string"
+    },
+    "codigo_vendedor": {
+      "type": "string"
+    },
+    "setor_vendedor": {
+      "type": "string"
+    },
+    "cev_antigo": {
+      "type": "string",
+      "description": "CEV original do contrato"
+    },
+    "cev_novo": {
+      "type": "string",
+      "description": "Novo n\u00famero de CEV ap\u00f3s renova\u00e7\u00e3o"
+    },
+    "entregue_a": {
+      "type": "string"
+    },
+    "data_entrega": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aberto",
+        "encerrado"
+      ],
+      "default": "aberto"
+    },
+    "data_encerramento": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "cliente_id",
+    "razao_social"
+  ]
+}

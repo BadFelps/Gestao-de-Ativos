@@ -1,0 +1,175 @@
+{
+  "name": "MaintenanceRequest",
+  "type": "object",
+  "properties": {
+    "request_number": {
+      "type": "string",
+      "description": "N\u00famero da solicita\u00e7\u00e3o gerado automaticamente"
+    },
+    "pdv_code": {
+      "type": "string",
+      "description": "C\u00f3digo do PDV"
+    },
+    "razao_social": {
+      "type": "string",
+      "description": "Raz\u00e3o Social do cliente"
+    },
+    "fantasia": {
+      "type": "string",
+      "description": "Nome Fantasia"
+    },
+    "address": {
+      "type": "string",
+      "description": "Endere\u00e7o do PDV"
+    },
+    "contact": {
+      "type": "string",
+      "description": "Contato do PDV"
+    },
+    "equipment_description": {
+      "type": "string",
+      "description": "Refrigerador com defeito (selecionado da base)"
+    },
+    "asset_tag": {
+      "type": "string",
+      "description": "N\u00famero da plaqueta do ativo"
+    },
+    "problem_description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do problema encontrado"
+    },
+    "initial_photo_url": {
+      "type": "string",
+      "description": "Foto do equipamento no momento da solicita\u00e7\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente_triagem",
+        "em_orcamento",
+        "aguardando_aprovacao",
+        "aprovado_execucao",
+        "em_execucao",
+        "concluido",
+        "cancelado"
+      ],
+      "default": "pendente_triagem",
+      "description": "Status atual da solicita\u00e7\u00e3o"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do administrativo na triagem"
+    },
+    "admin_action_by": {
+      "type": "string",
+      "description": "Quem realizou a triagem"
+    },
+    "admin_action_date": {
+      "type": "string",
+      "description": "Data da triagem"
+    },
+    "quote_value": {
+      "type": "number",
+      "description": "Valor total do or\u00e7amento"
+    },
+    "quote_description": {
+      "type": "string",
+      "description": "Diagn\u00f3stico / descri\u00e7\u00e3o do servi\u00e7o"
+    },
+    "quote_date": {
+      "type": "string",
+      "description": "Data do or\u00e7amento"
+    },
+    "quote_items": {
+      "type": "array",
+      "description": "Itens selecionados no or\u00e7amento (pe\u00e7as e servi\u00e7os)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "part_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "technician_name": {
+      "type": "string",
+      "description": "Nome do t\u00e9cnico respons\u00e1vel"
+    },
+    "commercial_decision": {
+      "type": "string",
+      "enum": [
+        "",
+        "aprovado",
+        "cancelado"
+      ],
+      "description": "Decis\u00e3o do comercial sobre o or\u00e7amento"
+    },
+    "commercial_decision_by": {
+      "type": "string"
+    },
+    "commercial_decision_date": {
+      "type": "string"
+    },
+    "commercial_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00e3o do comercial ao aprovar ou recusar o or\u00e7amento"
+    },
+    "execution_logs": {
+      "type": "array",
+      "description": "Registro das etapas da execu\u00e7\u00e3o pelo t\u00e9cnico",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "photo_url": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "completion_date": {
+      "type": "string",
+      "description": "Data de conclus\u00e3o do servi\u00e7o"
+    },
+    "cancellation_reason": {
+      "type": "string",
+      "description": "Motivo do cancelamento"
+    },
+    "cancelled_by": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string",
+      "description": "C\u00f3digo/nome de quem abriu a solicita\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "pdv_code",
+    "razao_social",
+    "problem_description"
+  ]
+}

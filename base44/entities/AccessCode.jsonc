@@ -1,0 +1,40 @@
+{
+  "name": "AccessCode",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do operador"
+    },
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo de acesso \u00fanico"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "logistics",
+        "driver",
+        "warehouse",
+        "commercial",
+        "gerenciais"
+      ],
+      "description": "Cargo/m\u00f3dulo ao qual o c\u00f3digo d\u00e1 acesso"
+    },
+    "revenda": {
+      "type": "string",
+      "enum": [
+        "MS Paulo Afonso",
+        "MS Delmiro Gouveia",
+        ""
+      ],
+      "description": "Revenda \u00e0 qual este acesso pertence (vazio = acesso a todas)"
+    }
+  },
+  "required": [
+    "name",
+    "code",
+    "role"
+  ]
+}

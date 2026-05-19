@@ -1,0 +1,403 @@
+{
+  "name": "ServiceOrder",
+  "type": "object",
+  "properties": {
+    "os_number": {
+      "type": "string",
+      "description": "N\u00famero da OS gerado automaticamente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "client_code": {
+      "type": "string",
+      "description": "C\u00f3digo do cliente (PDV)"
+    },
+    "client_address": {
+      "type": "string",
+      "description": "Endere\u00e7o do cliente"
+    },
+    "client_phone": {
+      "type": "string",
+      "description": "Telefone do cliente"
+    },
+    "razao_social": {
+      "type": "string",
+      "description": "Raz\u00e3o Social do cliente"
+    },
+    "fantasia": {
+      "type": "string",
+      "description": "Nome Fantasia do cliente"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CPF/CNPJ do cliente"
+    },
+    "revenda": {
+      "type": "string",
+      "description": "Revenda/Distribuidor do cliente"
+    },
+    "assets": {
+      "type": "array",
+      "description": "Lista de ativos para recolha",
+      "items": {
+        "type": "object",
+        "properties": {
+          "asset_type": {
+            "type": "string"
+          },
+          "asset_brand": {
+            "type": "string"
+          },
+          "asset_serial": {
+            "type": "string"
+          },
+          "asset_cev": {
+            "type": "string"
+          },
+          "asset_patrimonio": {
+            "type": "string"
+          },
+          "asset_description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "Refrigerador Vertical",
+        "Refrigerador Horizontal",
+        "Jogos de Mesa Madeira",
+        "Jogos de Mesa Pl\u00e1stica",
+        "Mesas Pl\u00e1sticas",
+        "Mesas de Madeira",
+        "Cadeiras Pl\u00e1sticas",
+        "Cadeiras de Madeira",
+        "Caixa T\u00e9rmica",
+        "Barril 30L",
+        "Barril 50L",
+        "Cilindro",
+        "Chopeira",
+        "Outro"
+      ]
+    },
+    "asset_brand": {
+      "type": "string",
+      "enum": [
+        "Devassa",
+        "Heineken",
+        "Amstel",
+        "Schin"
+      ]
+    },
+    "asset_serial": {
+      "type": "string"
+    },
+    "asset_cev": {
+      "type": "string"
+    },
+    "asset_patrimonio": {
+      "type": "string"
+    },
+    "asset_description": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "Recolha"
+      ],
+      "default": "Recolha"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Baixa",
+        "M\u00e9dia",
+        "Alta",
+        "Urgente"
+      ],
+      "default": "M\u00e9dia"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aguardando",
+        "Atribu\u00eddo",
+        "Em Rota",
+        "No Cliente",
+        "Conclu\u00eddo",
+        "Conclu\u00eddo com Ocorr\u00eancia",
+        "Conferido",
+        "Fechado",
+        "Exclu\u00eddo"
+      ],
+      "default": "Aguardando"
+    },
+    "deleted_at": {
+      "type": "string"
+    },
+    "deleted_by": {
+      "type": "string"
+    },
+    "deletion_reason": {
+      "type": "string"
+    },
+    "cancelamento_solicitado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Comercial solicitou cancelamento, aguardando confirma\u00e7\u00e3o do Administrativo"
+    },
+    "cancelamento_solicitado_por": {
+      "type": "string"
+    },
+    "cancelamento_solicitado_em": {
+      "type": "string"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0
+    },
+    "retry_authorized_by": {
+      "type": "string"
+    },
+    "retry_suggested_date": {
+      "type": "string"
+    },
+    "retry_confirmed_date": {
+      "type": "string"
+    },
+    "retry_selected_assets": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "retry_history": {
+      "type": "array",
+      "description": "Hist\u00f3rico completo de retentativas com snapshot de cada tentativa",
+      "items": {
+        "type": "object",
+        "properties": {
+          "attempt_number": {
+            "type": "number"
+          },
+          "authorized_by": {
+            "type": "string"
+          },
+          "authorized_date": {
+            "type": "string"
+          },
+          "occurrence_reason": {
+            "type": "string"
+          },
+          "occurrence_details": {
+            "type": "string"
+          },
+          "driver": {
+            "type": "string"
+          },
+          "route_date": {
+            "type": "string"
+          },
+          "commercial_comment": {
+            "type": "string"
+          },
+          "commercial_comment_by": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "has_pending_assets": {
+      "type": "boolean",
+      "default": false
+    },
+    "pending_assets_list": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "assigned_driver": {
+      "type": "string"
+    },
+    "assigned_vehicle": {
+      "type": "string"
+    },
+    "assigned_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "route_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "driver_checkin_time": {
+      "type": "string"
+    },
+    "driver_checkout_time": {
+      "type": "string"
+    },
+    "driver_status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "A Caminho",
+        "No Local",
+        "Conclu\u00eddo",
+        "N\u00e3o Realizado"
+      ]
+    },
+    "driver_notes": {
+      "type": "string"
+    },
+    "driver_collected_assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "asset_type": {
+            "type": "string"
+          },
+          "asset_brand": {
+            "type": "string"
+          },
+          "qty_collected": {
+            "type": "number"
+          },
+          "plaqueta": {
+            "type": "string"
+          },
+          "patrimonio": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "occurrence_reason": {
+      "type": "string",
+      "enum": [
+        "",
+        "Porta Fechada",
+        "Cliente Recusou",
+        "Ativo N\u00e3o Encontrado",
+        "Endere\u00e7o Incorreto",
+        "Sem Acesso",
+        "N\u00e3o deu tempo",
+        "Outro"
+      ]
+    },
+    "occurrence_details": {
+      "type": "string"
+    },
+    "commercial_comment": {
+      "type": "string"
+    },
+    "commercial_comment_by": {
+      "type": "string"
+    },
+    "commercial_comment_date": {
+      "type": "string"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "signature_url": {
+      "type": "string"
+    },
+    "warehouse_received": {
+      "type": "boolean",
+      "default": false
+    },
+    "warehouse_asset_condition": {
+      "type": "string",
+      "enum": [
+        "Bom",
+        "Danificado",
+        "Sucata"
+      ]
+    },
+    "warehouse_notes": {
+      "type": "string"
+    },
+    "warehouse_divergence": {
+      "type": "boolean",
+      "default": false
+    },
+    "warehouse_divergence_details": {
+      "type": "string"
+    },
+    "warehouse_patrimonio_divergence": {
+      "type": "boolean",
+      "default": false
+    },
+    "warehouse_patrimonio_divergence_details": {
+      "type": "string"
+    },
+    "warehouse_checked_by": {
+      "type": "string"
+    },
+    "warehouse_check_date": {
+      "type": "string"
+    },
+    "warehouse_checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "asset_type": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "serial_number": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "warehouse_operator_signature": {
+      "type": "string"
+    },
+    "warehouse_driver_signature": {
+      "type": "string"
+    },
+    "warehouse_resolution": {
+      "type": "string"
+    },
+    "warehouse_resolution_by": {
+      "type": "string"
+    },
+    "warehouse_resolution_date": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_name",
+    "action_type"
+  ]
+}

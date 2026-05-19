@@ -1,0 +1,53 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio destinat\u00e1rio"
+    },
+    "panel": {
+      "type": "string",
+      "enum": [
+        "admin_maintenance",
+        "commercial_maintenance",
+        "technician_maintenance"
+      ],
+      "description": "Painel ao qual a notifica\u00e7\u00e3o se destina"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo da notifica\u00e7\u00e3o"
+    },
+    "message": {
+      "type": "string",
+      "description": "Mensagem da notifica\u00e7\u00e3o"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "info",
+        "success",
+        "warning",
+        "error"
+      ],
+      "default": "info",
+      "description": "Tipo de notifica\u00e7\u00e3o"
+    },
+    "request_id": {
+      "type": "string",
+      "description": "ID da solicita\u00e7\u00e3o de manuten\u00e7\u00e3o relacionada"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a notifica\u00e7\u00e3o foi lida"
+    }
+  },
+  "required": [
+    "user_email",
+    "panel",
+    "title",
+    "message"
+  ]
+}
