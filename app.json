@@ -11,6 +11,12 @@
     ],
     "plugins": [
       [
+        "./plugins/with-cielo-smart.cjs",
+        {
+          "minSdkVersion": 23
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "Permitir que o Gestao Ativos use a camera para anexar fotos as tarefas."
