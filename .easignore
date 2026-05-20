@@ -1,0 +1,19 @@
+# Keep dist in EAS uploads because the Android WebView bundles it into assets/www.
+node_modules
+android
+ios
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.env
+.env.*
+.vite
+dist-ssr
+*.local
+.vscode
+.idea
+.DS_Store

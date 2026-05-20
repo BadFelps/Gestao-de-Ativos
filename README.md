@@ -28,6 +28,33 @@ VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
 
 Run the app: `npm run dev`
 
+**Expo Android APK**
+
+This repository also contains a native Expo Android app for Cielo LIO devices. It does not use WebView; the native screens call the Base44 API directly.
+
+1. Configure the same Base44 env vars used by the web app:
+
+```
+VITE_BASE44_APP_ID=your_app_id
+VITE_BASE44_APP_BASE_URL=your_backend_url
+VITE_BASE44_FUNCTIONS_VERSION=your_functions_version
+```
+
+2. Build the APK with EAS:
+
+```
+npm install
+npm run build:apk
+```
+
+The `preview` EAS profile in `eas.json` is configured to output an APK. For Expo/EAS environments, you can also expose the same values as `EXPO_PUBLIC_BASE44_APP_ID`, `EXPO_PUBLIC_BASE44_APP_BASE_URL`, and `EXPO_PUBLIC_BASE44_FUNCTIONS_VERSION`.
+
+For local native project generation without EAS:
+
+```
+npm run native:prebuild
+```
+
 **Publish your changes**
 
 Open [Base44.com](http://Base44.com) and click on Publish.
