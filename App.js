@@ -520,7 +520,6 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
         <Text style={styles.taskTitle}>{item.client_name || 'Cliente sem nome'}</Text>
         <Text style={styles.statusBadge}>{item.status || 'Sem status'}</Text>
       </View>
-      <Text style={styles.taskMeta}>OS: {item.os_number || '-'}</Text>
       <Text style={styles.taskMeta}>{item.client_address || 'Endereco nao informado'}</Text>
       <Text style={styles.taskMeta}>Acao: {item.action_type || 'Recolha'}</Text>
       {assets.map((asset, index) => (
@@ -733,15 +732,19 @@ function MinhaRotaScreen({ navigation, route }) {
           style={[styles.tabButton, activeTab === 'manual' && styles.activeTab]}
           onPress={() => setActiveTab('manual')}
         >
-          <Text style={[styles.tabText, activeTab === 'manual' && styles.activeTabText]}>Manual</Text>
+          <Text style={[styles.tabText, activeTab === 'manual' && styles.activeTabText]}>{'Instru\u00e7\u00f5es'}</Text>
         </TouchableOpacity>
       </View>
 
       {activeTab === 'manual' ? (
         <ScrollView style={styles.content} contentContainerStyle={styles.manualContent}>
-          <Text style={styles.manualTitle}>Manual</Text>
-          <Text style={styles.manualText}>Consulte sua rota, confira os dados do PDV e atualize a lista antes de iniciar as visitas.</Text>
-          <Text style={styles.manualText}>Em caso de divergencia, entre em contato com a equipe de logistica.</Text>
+          <Text style={styles.manualTitle}>{'Instru\u00e7\u00f5es'}</Text>
+          <Text style={styles.manualText}>{'Ao concluir cada recolhimento que est\u00e1 atribu\u00eddo \u00e0 sua rota, preencha as informa\u00e7\u00f5es corretamente na aba Minha Rota.'}</Text>
+          <Text style={styles.manualText}>{'\u2022 N\u00e3o realizar recolha parcial;'}</Text>
+          <Text style={styles.manualText}>{'\u2022 N\u00e3o recolher material diferente do informado em Minha Rota;'}</Text>
+          <Text style={styles.manualText}>{'\u2022 N\u00e3o recolher material quebrado;'}</Text>
+          <Text style={styles.manualText}>{'Deve-se seguir as regras acima, caso contr\u00e1rio, somente com autoriza\u00e7\u00e3o do(a) Supervisor(a) de Log\u00edstica.'}</Text>
+          <Text style={styles.manualText}>{'Qualquer d\u00favida ou sugest\u00e3o de melhoria, entre em contato com o seu supervisor.'}</Text>
         </ScrollView>
       ) : (
         <View style={styles.content}>
