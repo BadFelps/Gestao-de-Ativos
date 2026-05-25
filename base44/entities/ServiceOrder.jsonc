@@ -249,6 +249,10 @@
     "driver_checkout_time": {
       "type": "string"
     },
+    "driver_completion_location": {
+      "type": "string",
+      "description": "Coordenadas GPS capturadas na conclus\u00e3o da coleta no formato latitude,longitude"
+    },
     "driver_status": {
       "type": "string",
       "enum": [
@@ -289,6 +293,11 @@
       "type": "string",
       "enum": [
         "",
+        "PDV Fechado",
+        "Vasilhame Cheio",
+        "Ativo n\u00e3o Encontrado",
+        "Recolha Cancelada",
+        "Respons\u00e1vel Ausente",
         "Porta Fechada",
         "Cliente Recusou",
         "Ativo N\u00e3o Encontrado",

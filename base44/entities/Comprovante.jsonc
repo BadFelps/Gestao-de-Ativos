@@ -1,0 +1,61 @@
+{
+  "name": "Comprovante",
+  "type": "object",
+  "properties": {
+    "numero_comprovante": {
+      "type": "string",
+      "description": "Numero sequencial no formato COMP-ANO-SEQUENCIAL"
+    },
+    "tarefa_id": {
+      "type": "string",
+      "description": "ID da tarefa concluida"
+    },
+    "cliente_nome": {
+      "type": "string"
+    },
+    "cliente_endereco": {
+      "type": "string"
+    },
+    "codigo_pdv": {
+      "type": "string"
+    },
+    "motorista_nome": {
+      "type": "string"
+    },
+    "empresa": {
+      "type": "string"
+    },
+    "ativos_devolvidos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          },
+          "numero_patrimonio": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "data_hora": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "emitido"
+      ],
+      "default": "emitido"
+    }
+  },
+  "required": [
+    "numero_comprovante",
+    "tarefa_id",
+    "status"
+  ]
+}

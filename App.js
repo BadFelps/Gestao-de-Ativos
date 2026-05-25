@@ -3,6 +3,7 @@ import {
   Alert,
   FlatList,
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +15,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import CieloLio from 'react-native-lio';
 
 const Stack = createNativeStackNavigator();
 
@@ -115,6 +118,152 @@ const filterEntity = (entity, filter, sort, limit, skip) =>
     limit,
     skip
   });
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getCompletionLocationString = async () => {
+  try {
+    const servicesEnabled = await Location.hasServicesEnabledAsync();
+    if (!servicesEnabled) return '';
+
+    let permission = await Location.getForegroundPermissionsAsync();
+    if (!permission.granted) {
+      permission = await Location.requestForegroundPermissionsAsync();
+    }
+    if (!permission.granted) return '';
+
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced
+    });
+    const { latitude, longitude } = position.coords || {};
+    if (typeof latitude !== 'number' || typeof longitude !== 'number') return '';
+    return `${latitude},${longitude}`;
+  } catch {
+    return '';
+  }
+};
+
+const nextReceiptNumber = async () => {
+  const year = new Date().getFullYear();
+  let sequence = 1;
+
+  try {
+    const latest = await listEntity('Comprovante', { sort: '-numero_comprovante', limit: 1 });
+    const latestNumber = latest?.[0]?.numero_comprovante || '';
+    const match = String(latestNumber).match(/^COMP-(\d{4})-(\d+)$/);
+    if (match && Number(match[1]) === year) {
+      sequence = Number(match[2]) + 1;
+    }
+  } catch {
+    sequence = 1;
+  }
+
+  return `COMP-${year}-${String(sequence).padStart(4, '0')}`;
+};
+
+const formatReceiptDateTime = (date = new Date()) => {
+  const pad = (value) => String(value).padStart(2, '0');
+  return {
+    date: `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`,
+    time: `${pad(date.getHours())}:${pad(date.getMinutes())}`
+  };
+};
+
+const normalizeReceiptAssets = (collected) => collected.map((asset) => ({
+  nome: asset.asset_type || 'Ativo',
+  quantidade: asset.qty_collected || 1,
+  numero_patrimonio: asset.patrimonio || asset.plaqueta || asset.expected_patrimonio || ''
+}));
+
+const buildReceiptText = (receipt, copyLabel) => {
+  const { date, time } = formatReceiptDateTime(new Date(receipt.data_hora));
+  const assetsText = (receipt.ativos_devolvidos || [])
+    .map((asset) => {
+      const patrimonyValue = String(asset.numero_patrimonio || '');
+      const patrimony = patrimonyValue
+        ? `  ${patrimonyValue.toUpperCase().startsWith('PAT-') ? patrimonyValue : `PAT-${patrimonyValue}`}`
+        : '';
+      return `- ${asset.nome} x${asset.quantidade}${patrimony}`;
+    })
+    .join('\n') || '- Nenhum ativo informado';
+  const signature = copyLabel === 'VIA DO MOTORISTA'
+    ? '\nAssinatura do cliente:\n\n\n_________________________________\n\n================================\n'
+    : '';
+
+  return [
+    '================================',
+    '     GRUPO MS - COMPROVANTE',
+    '     DE DEVOLUCAO DE ATIVOS',
+    '================================',
+    `N: ${receipt.numero_comprovante}`,
+    `Data: ${date}  Hora: ${time}`,
+    '',
+    `CLIENTE: ${receipt.cliente_nome || '-'}`,
+    `Endereco: ${receipt.cliente_endereco || '-'}`,
+    `PDV: ${receipt.codigo_pdv || '-'}`,
+    '',
+    `MOTORISTA: ${receipt.motorista_nome || '-'}`,
+    `Empresa: ${receipt.empresa || '-'}`,
+    '',
+    'ATIVOS DEVOLVIDOS:',
+    assetsText,
+    '',
+    '================================',
+    `        ${copyLabel}`,
+    '================================',
+    signature
+  ].join('\n');
+};
+
+const waitForPrinterState = () => new Promise((resolve, reject) => {
+  if (!CieloLio?.addListener) {
+    resolve();
+    return;
+  }
+
+  let settled = false;
+  let subscription;
+  const finish = (callback) => {
+    if (settled) return;
+    settled = true;
+    subscription?.remove?.();
+    callback();
+  };
+
+  subscription = CieloLio.addListener('onChangePrinterState', (data) => {
+    const state = data?.printerState;
+    if (state === 0 || state === 'SUCCESS') {
+      finish(resolve);
+      return;
+    }
+    const message = state === 2 || state === 'NO_PAPER'
+      ? 'Impressora sem papel.'
+      : 'Impressora indisponivel.';
+    finish(() => reject(new Error(message)));
+  });
+
+  setTimeout(() => finish(resolve), 7000);
+});
+
+const printCieloText = async (text, style) => {
+  if (!CieloLio?.printText) {
+    throw new Error('Modulo de impressao Cielo indisponivel.');
+  }
+
+  const printerState = waitForPrinterState();
+  CieloLio.printText(text, style);
+  await printerState;
+};
+
+const printReceiptCopies = async (receipt) => {
+  const printStyle = {
+    key_attributes_align: 1,
+    key_attributes_textsize: 20
+  };
+  await printCieloText(`${buildReceiptText(receipt, 'VIA DO CLIENTE')}\n\n`, printStyle);
+  await sleep(900);
+  await printCieloText(`${buildReceiptText(receipt, 'VIA DO MOTORISTA')}\n\n`, printStyle);
+};
 
 const getOperatorName = (code) => code?.name || code?.owner_name || code?.operator_name || '';
 
@@ -312,12 +461,11 @@ function CodigoScreen({ navigation, route }) {
   );
 }
 
-function CounterCard({ icon, label, value, color }) {
+function CounterPill({ label, value, color }) {
   return (
-    <View style={styles.counterCard}>
-      <Text style={[styles.counterIcon, { color }]}>{icon}</Text>
-      <Text style={styles.counterValue}>{value}</Text>
-      <Text style={styles.counterLabel}>{label}</Text>
+    <View style={styles.counterPill}>
+      <Text style={[styles.counterPillValue, { color }]}>{value}</Text>
+      <Text style={styles.counterPillLabel}>{label}</Text>
     </View>
   );
 }
@@ -326,20 +474,20 @@ const ACTIVE_STATUSES = ['Atribuido', 'Atribu\u00eddo', 'Em Rota', 'No Cliente']
 const DONE_STATUS = 'Conclu\u00eddo';
 const OCCURRENCE_STATUS = 'Conclu\u00eddo com Ocorr\u00eancia';
 const OCCURRENCE_REASONS = [
-  'Porta Fechada',
-  'Cliente Recusou',
-  'Ativo N\u00e3o Encontrado',
-  'Endere\u00e7o Incorreto',
-  'Sem Acesso',
-  'N\u00e3o deu tempo',
-  'Outro'
+  'PDV Fechado',
+  'Vasilhame Cheio',
+  'Ativo n\u00e3o Encontrado',
+  'Recolha Cancelada',
+  'Respons\u00e1vel Ausente',
+  'N\u00e3o deu tempo'
 ];
 
-function TaskItem({ item, operatorName, accessCode, onUpdated }) {
+function TaskItem({ item, operatorName, accessCode, company, onUpdated }) {
   const [expanded, setExpanded] = useState(false);
   const [notes, setNotes] = useState(item.driver_notes || '');
   const [occurrenceReason, setOccurrenceReason] = useState(item.occurrence_reason || '');
   const [occurrenceDetails, setOccurrenceDetails] = useState(item.occurrence_details || '');
+  const [occurrencePickerOpen, setOccurrencePickerOpen] = useState(false);
   const [collectedAssets, setCollectedAssets] = useState({});
   const [loadingAction, setLoadingAction] = useState('');
 
@@ -391,6 +539,23 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
     }));
   };
 
+  const setAssetPatrimonio = (key, patrimonio) => {
+    setCollectedAssets((current) => ({
+      ...current,
+      [key]: {
+        ...(current[key] || {}),
+        checked: true,
+        plaqueta: patrimonio,
+        patrimonio
+      }
+    }));
+  };
+
+  const needsPatrimonio = (asset) => {
+    const name = String(asset?.asset_type || '');
+    return name.includes('Refrigerador') || name.includes('Chopeira');
+  };
+
   const buildCollectedPayload = () => Object.entries(collectedAssets)
     .filter(([, value]) => value.checked)
     .map(([key, value]) => {
@@ -418,15 +583,47 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
     setLoadingAction('complete');
     try {
       const summary = collected.map((asset) => `${asset.asset_type}: ${asset.qty_collected} un.`).join('; ');
-      await updateEntity('ServiceOrder', item.id, {
+      const checkoutTime = new Date().toISOString();
+      const completionLocation = await getCompletionLocationString();
+      const updatePayload = {
         status: DONE_STATUS,
         driver_status: DONE_STATUS,
         driver_notes: notes ? `${notes} | Recolhido: ${summary}` : `Recolhido: ${summary}`,
         driver_collected_assets: collected,
-        driver_checkout_time: new Date().toISOString()
-      });
+        driver_checkout_time: checkoutTime
+      };
+      if (completionLocation) {
+        updatePayload.driver_completion_location = completionLocation;
+      }
+
+      await updateEntity('ServiceOrder', item.id, updatePayload);
       await logAction(`Status -> ${DONE_STATUS}`, notes || summary);
-      Alert.alert('Coleta concluida', 'Dados enviados com sucesso.');
+
+      let postCompletionWarning = '';
+      try {
+        const receipt = {
+          numero_comprovante: await nextReceiptNumber(),
+          tarefa_id: item.id,
+          cliente_nome: item.client_name || '',
+          cliente_endereco: item.client_address || '',
+          codigo_pdv: item.client_code || '',
+          motorista_nome: operatorName || '',
+          empresa: company || item.revenda || '',
+          ativos_devolvidos: normalizeReceiptAssets(collected),
+          data_hora: checkoutTime,
+          status: 'emitido'
+        };
+        await createEntity('Comprovante', receipt);
+        try {
+          await printReceiptCopies(receipt);
+        } catch (printErr) {
+          postCompletionWarning = `\n\nImpressora indisponivel: ${printErr.message}`;
+        }
+      } catch (receiptErr) {
+        postCompletionWarning = `\n\nComprovante nao emitido: ${receiptErr.message}`;
+      }
+
+      Alert.alert('Coleta concluida', `Dados enviados com sucesso.${postCompletionWarning}`);
       onUpdated?.();
     } catch (err) {
       Alert.alert('Erro ao concluir coleta', err.message);
@@ -473,9 +670,28 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
     }
   };
 
+  const handleRemovePhoto = async (urlToRemove) => {
+    setLoadingAction('photo-remove');
+    try {
+      await updateEntity('ServiceOrder', item.id, {
+        photo_urls: photoUrls.filter((url) => url !== urlToRemove)
+      });
+      await logAction('Remover foto', urlToRemove);
+      onUpdated?.();
+    } catch (err) {
+      Alert.alert('Erro ao remover foto', err.message);
+    } finally {
+      setLoadingAction('');
+    }
+  };
+
   const handleOccurrence = async () => {
     if (!occurrenceReason) {
       Alert.alert('Motivo obrigatorio', 'Selecione um motivo para registrar a ocorrencia.');
+      return;
+    }
+    if (occurrenceReason === 'PDV Fechado' && photoUrls.length === 0) {
+      Alert.alert('Foto obrigatória para ocorrência PDV Fechado.');
       return;
     }
 
@@ -517,7 +733,10 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
     <View style={styles.taskCard}>
       <TouchableOpacity activeOpacity={0.9} onPress={() => setExpanded((value) => !value)}>
       <View style={styles.taskHeader}>
-        <Text style={styles.taskTitle}>{item.client_name || 'Cliente sem nome'}</Text>
+        <View style={styles.taskTitleWrap}>
+          <Text style={styles.taskTitle}>{item.client_name || 'Cliente sem nome'}</Text>
+          {item.client_code ? <Text style={styles.clientCodeText}>{item.client_code}</Text> : null}
+        </View>
         <Text style={styles.statusBadge}>{item.status || 'Sem status'}</Text>
       </View>
       <Text style={styles.taskMeta}>{item.client_address || 'Endereco nao informado'}</Text>
@@ -566,16 +785,30 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
                       </View>
                     </TouchableOpacity>
                     {state.checked ? (
-                      <View style={styles.qtyRow}>
-                        <Text style={styles.smallLabel}>Qtd. recolhida</Text>
-                        <TextInput
-                          value={String(state.qty || '')}
-                          onChangeText={(value) => setAssetQty(key, value)}
-                          keyboardType="number-pad"
-                          placeholder="0"
-                          placeholderTextColor="#94a3b8"
-                          style={styles.qtyInput}
-                        />
+                      <View style={styles.collectionFields}>
+                        <View style={styles.qtyRow}>
+                          <Text style={styles.smallLabel}>Qtd. recolhida</Text>
+                          <TextInput
+                            value={String(state.qty || '')}
+                            onChangeText={(value) => setAssetQty(key, value)}
+                            keyboardType="number-pad"
+                            placeholder="0"
+                            placeholderTextColor="#94a3b8"
+                            style={styles.qtyInput}
+                          />
+                        </View>
+                        {needsPatrimonio(asset) ? (
+                          <View style={styles.patrimonioField}>
+                            <Text style={styles.smallLabel}>{'N\u00ba DO PATRIM\u00d4NIO'}</Text>
+                            <TextInput
+                              value={state.patrimonio || state.plaqueta || ''}
+                              onChangeText={(value) => setAssetPatrimonio(key, value)}
+                              placeholder="Ex: 2125"
+                              placeholderTextColor="#94a3b8"
+                              style={styles.patrimonioInput}
+                            />
+                          </View>
+                        ) : null}
                       </View>
                     ) : null}
                   </View>
@@ -600,20 +833,17 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
               </View>
 
               <View style={styles.occurrenceBox}>
-                <Text style={styles.occurrenceTitle}>Registrar Ocorrencia</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reasonScroll}>
-                  {OCCURRENCE_REASONS.map((reason) => (
-                    <TouchableOpacity
-                      key={reason}
-                      onPress={() => setOccurrenceReason(reason)}
-                      style={[styles.reasonChip, occurrenceReason === reason && styles.reasonChipActive]}
-                    >
-                      <Text style={[styles.reasonChipText, occurrenceReason === reason && styles.reasonChipTextActive]}>
-                        {reason}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                <Text style={styles.occurrenceTitle}>{'Registrar Ocorr\u00eancia'}</Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => setOccurrencePickerOpen(true)}
+                  style={styles.reasonDropdown}
+                >
+                  <Text style={[styles.reasonDropdownText, !occurrenceReason && styles.reasonDropdownPlaceholder]}>
+                    {occurrenceReason || 'Motivo'}
+                  </Text>
+                  <Text style={styles.reasonDropdownIcon}>v</Text>
+                </TouchableOpacity>
                 <TextInput
                   value={occurrenceDetails}
                   onChangeText={setOccurrenceDetails}
@@ -623,11 +853,44 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
                   style={styles.textArea}
                 />
                 <Button
-                  label={loadingAction === 'occurrence' ? 'Enviando...' : 'Registrar Ocorrencia'}
+                  label={loadingAction === 'occurrence' ? 'Enviando...' : 'Registrar Ocorr\u00eancia'}
                   onPress={handleOccurrence}
                   variant="red"
                   disabled={!!loadingAction}
                 />
+                <Modal
+                  visible={occurrencePickerOpen}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setOccurrencePickerOpen(false)}
+                >
+                  <TouchableOpacity
+                    activeOpacity={1}
+                    onPress={() => setOccurrencePickerOpen(false)}
+                    style={styles.modalOverlay}
+                  >
+                    <View style={styles.reasonModal}>
+                      <Text style={styles.reasonModalTitle}>Motivo</Text>
+                      {OCCURRENCE_REASONS.map((reason) => (
+                        <TouchableOpacity
+                          key={reason}
+                          onPress={() => {
+                            setOccurrenceReason(reason);
+                            setOccurrencePickerOpen(false);
+                          }}
+                          style={styles.reasonOption}
+                        >
+                          <Text style={[
+                            styles.reasonOptionText,
+                            occurrenceReason === reason && styles.reasonOptionTextActive
+                          ]}>
+                            {reason}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
               </View>
             </>
           ) : (
@@ -637,7 +900,19 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
           {photoUrls.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoStrip}>
               {photoUrls.map((url, index) => (
-                <Image key={`${url}-${index}`} source={{ uri: url }} style={styles.photoThumb} />
+                <View key={`${url}-${index}`} style={styles.photoThumbWrap}>
+                  <Image source={{ uri: url }} style={styles.photoThumb} />
+                  {isActive ? (
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => handleRemovePhoto(url)}
+                      disabled={!!loadingAction}
+                      style={styles.removePhotoButton}
+                    >
+                      <Text style={styles.removePhotoText}>✕</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               ))}
             </ScrollView>
           ) : null}
@@ -650,7 +925,6 @@ function TaskItem({ item, operatorName, accessCode, onUpdated }) {
 function MinhaRotaScreen({ navigation, route }) {
   const { company, operatorName } = route.params || {};
   const [activeTab, setActiveTab] = useState('rota');
-  const [dateFilter, setDateFilter] = useState(todayIso());
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -678,26 +952,23 @@ function MinhaRotaScreen({ navigation, route }) {
   }, [loadOrders]);
 
   const today = todayIso();
-  const isToday = dateFilter === today;
-
   const matchesDate = useCallback((order) => (
-    order.route_date === dateFilter ||
-    order.assigned_date === dateFilter ||
-    (!order.route_date && !order.assigned_date && isToday)
-  ), [dateFilter, isToday]);
+    order.route_date === today ||
+    order.assigned_date === today ||
+    (!order.route_date && !order.assigned_date)
+  ), [today]);
 
   const active = useMemo(() => orders.filter((order) =>
-    ['Atribuido', 'Atribuído', 'Em Rota', 'No Cliente'].includes(order.status) &&
-    (isToday || matchesDate(order))
-  ), [isToday, matchesDate, orders]);
+    ACTIVE_STATUSES.includes(order.status)
+  ), [orders]);
 
   const completed = useMemo(() => orders.filter((order) =>
-    ['Concluido', 'Concluído', 'Concluido com Ocorrencia', 'Concluído com Ocorrência'].includes(order.status) &&
+    [DONE_STATUS, OCCURRENCE_STATUS, 'Concluido', 'Concluido com Ocorrencia'].includes(order.status) &&
     matchesDate(order)
   ), [matchesDate, orders]);
 
   const occurrences = useMemo(() => orders.filter((order) =>
-    ['Concluido com Ocorrencia', 'Concluído com Ocorrência'].includes(order.status) &&
+    [OCCURRENCE_STATUS, 'Concluido com Ocorrencia'].includes(order.status) &&
     matchesDate(order)
   ), [matchesDate, orders]);
 
@@ -712,13 +983,21 @@ function MinhaRotaScreen({ navigation, route }) {
 
   return (
     <View style={styles.routeScreen}>
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.routeTitle}>Minha Rota</Text>
-          <Text style={styles.routeSubtitle}>Operador: {operatorName || '-'}</Text>
-          <Text style={styles.headerCompanyBadge}>{company}</Text>
-        </View>
-        <Button label="Sair" onPress={logout} variant="red" style={styles.exitButton} />
+      <View style={styles.compactHeader}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.compactHeaderRow}
+          style={styles.compactHeaderScroll}
+        >
+          <Text style={styles.operatorName} numberOfLines={1}>{operatorName || '-'}</Text>
+          <Text style={styles.compactCompanyBadge} numberOfLines={1}>{company || '-'}</Text>
+          <CounterPill label="Ativas" value={active.length} color="#2563eb" />
+          <CounterPill label="Feitas" value={completed.length} color="#16a34a" />
+          <CounterPill label="Ocorrências" value={occurrences.length} color="#f97316" />
+        </ScrollView>
+        <Button label={loading ? '...' : 'Atualizar'} onPress={loadOrders} variant="outline" style={styles.compactRefreshButton} />
+        <Button label="Sair" onPress={logout} variant="red" style={styles.compactExitButton} />
       </View>
 
       <View style={styles.tabs}>
@@ -748,24 +1027,7 @@ function MinhaRotaScreen({ navigation, route }) {
         </ScrollView>
       ) : (
         <View style={styles.content}>
-          <View style={styles.filterRow}>
-            <TextInput
-              value={dateFilter}
-              onChangeText={setDateFilter}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor="#94a3b8"
-              style={styles.dateInput}
-            />
-            <Button label={loading ? '...' : 'Atualizar'} onPress={loadOrders} variant="outline" style={styles.refreshButton} />
-          </View>
-
           {error ? <Text style={styles.routeErrorText}>{error}</Text> : null}
-
-          <View style={styles.counterRow}>
-            <CounterCard icon="⌁" label="Ativas" value={active.length} color="#2563eb" />
-            <CounterCard icon="✓" label="Feitas" value={completed.length} color="#16a34a" />
-            <CounterCard icon="!" label="Ocorrencias" value={occurrences.length} color="#f97316" />
-          </View>
 
           <FlatList
             data={visibleOrders}
@@ -775,6 +1037,7 @@ function MinhaRotaScreen({ navigation, route }) {
                 item={item}
                 operatorName={operatorName}
                 accessCode={route.params?.code}
+                company={company}
                 onUpdated={loadOrders}
               />
             )}
@@ -940,6 +1203,75 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff'
   },
+  compactHeader: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 26,
+    paddingHorizontal: 10,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#ffffff'
+  },
+  compactHeaderScroll: {
+    flex: 1
+  },
+  compactHeaderRow: {
+    alignItems: 'center',
+    gap: 6,
+    paddingRight: 4
+  },
+  operatorName: {
+    maxWidth: 110,
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  compactCompanyBadge: {
+    maxWidth: 100,
+    overflow: 'hidden',
+    color: '#c2410c',
+    fontSize: 11,
+    fontWeight: '900',
+    backgroundColor: '#ffedd5',
+    borderRadius: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 4
+  },
+  counterPill: {
+    minHeight: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 7,
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 7
+  },
+  counterPillValue: {
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  counterPillLabel: {
+    color: '#64748b',
+    fontSize: 10,
+    fontWeight: '800'
+  },
+  compactRefreshButton: {
+    width: 72,
+    minHeight: 32,
+    marginTop: 0,
+    paddingHorizontal: 4
+  },
+  compactExitButton: {
+    width: 48,
+    minHeight: 32,
+    marginTop: 0,
+    paddingHorizontal: 4
+  },
   header: {
     minHeight: 112,
     flexDirection: 'row',
@@ -1099,11 +1431,19 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 8
   },
+  taskTitleWrap: {
+    flex: 1
+  },
   taskTitle: {
-    flex: 1,
     color: '#111827',
     fontSize: 16,
     fontWeight: '900'
+  },
+  clientCodeText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2
   },
   statusBadge: {
     overflow: 'hidden',
@@ -1216,6 +1556,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10
   },
+  collectionFields: {
+    gap: 10
+  },
   smallLabel: {
     color: '#475569',
     fontSize: 12,
@@ -1232,6 +1575,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     textAlign: 'center'
+  },
+  patrimonioField: {
+    gap: 6,
+    marginTop: 2
+  },
+  patrimonioInput: {
+    minHeight: 42,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    color: '#111827',
+    backgroundColor: '#ffffff',
+    fontSize: 15,
+    paddingHorizontal: 12
   },
   actionRow: {
     flexDirection: 'row',
@@ -1256,39 +1613,104 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginBottom: 8
   },
-  reasonScroll: {
-    marginBottom: 10
-  },
-  reasonChip: {
+  reasonDropdown: {
+    minHeight: 46,
     borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 999,
+    borderColor: '#f97316',
+    borderRadius: 10,
     backgroundColor: '#ffffff',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginRight: 8
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
-  reasonChipActive: {
-    borderColor: '#dc2626',
-    backgroundColor: '#dc2626'
-  },
-  reasonChipText: {
-    color: '#991b1b',
-    fontSize: 12,
+  reasonDropdownText: {
+    flex: 1,
+    color: '#111827',
+    fontSize: 14,
     fontWeight: '800'
   },
-  reasonChipTextActive: {
-    color: '#ffffff'
+  reasonDropdownPlaceholder: {
+    color: '#94a3b8'
+  },
+  reasonDropdownIcon: {
+    color: '#f97316',
+    fontSize: 22,
+    fontWeight: '900',
+    marginLeft: 10
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)'
+  },
+  reasonModal: {
+    borderWidth: 1,
+    borderColor: '#fed7aa',
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    overflow: 'hidden'
+  },
+  reasonModalTitle: {
+    color: '#991b1b',
+    fontSize: 15,
+    fontWeight: '900',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#fff7ed',
+    borderBottomWidth: 1,
+    borderBottomColor: '#fed7aa'
+  },
+  reasonOption: {
+    minHeight: 48,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9'
+  },
+  reasonOptionText: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700'
+  },
+  reasonOptionTextActive: {
+    color: '#dc2626',
+    fontWeight: '900'
   },
   photoStrip: {
     marginTop: 12
+  },
+  photoThumbWrap: {
+    width: 72,
+    height: 72,
+    marginRight: 8
   },
   photoThumb: {
     width: 72,
     height: 72,
     borderRadius: 10,
-    marginRight: 8,
     backgroundColor: '#e5e7eb'
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    backgroundColor: '#dc2626'
+  },
+  removePhotoText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '900',
+    lineHeight: 18
   },
   manualContent: {
     paddingBottom: 28

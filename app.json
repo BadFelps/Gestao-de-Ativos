@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gestao Ativos",
     "slug": "gestao-ativos",
-    "version": "1.0.0",
+    "version": "2.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "gestaoativos",
@@ -21,6 +21,12 @@
         {
           "cameraPermission": "Permitir que o Gestao Ativos use a camera para anexar fotos as tarefas."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permitir que o Gestao Ativos capture a localizacao ao concluir a coleta."
+        }
       ]
     ],
     "splash": {
@@ -32,10 +38,13 @@
     ],
     "android": {
       "package": "br.com.gestaoativos.app",
+      "versionCode": 21,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
-        "CAMERA"
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#0f172a"

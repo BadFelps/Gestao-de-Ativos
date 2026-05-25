@@ -1,4 +1,4 @@
-const { withAndroidManifest, withGradleProperties } = require('@expo/config-plugins');
+const { withAndroidManifest, withGradleProperties, withProjectBuildGradle } = require('@expo/config-plugins');
 
 const CIELO_INTEGRATION_META_NAME = 'cs_integration_type';
 const CIELO_INTEGRATION_META_VALUE = 'uri';
@@ -44,6 +44,18 @@ function setGradleProperty(properties, key, value) {
   }
 }
 
+function ensureCieloMavenRepository(buildGradle) {
+  const repositoryLine = 'url("$rootDir/../node_modules/react-native-lio/android/cielo-sdk")';
+  if (buildGradle.includes(repositoryLine)) {
+    return buildGradle;
+  }
+
+  return buildGradle.replace(
+    /allprojects\s*\{\s*repositories\s*\{/,
+    (match) => `${match}\n        maven { ${repositoryLine} }`
+  );
+}
+
 module.exports = function withCieloSmart(config, options = {}) {
   const minSdkVersion = String(Math.max(Number(options.minSdkVersion || 23), 23));
 
@@ -54,6 +66,11 @@ module.exports = function withCieloSmart(config, options = {}) {
 
   config = withGradleProperties(config, (modConfig) => {
     setGradleProperty(modConfig.modResults, 'android.minSdkVersion', minSdkVersion);
+    return modConfig;
+  });
+
+  config = withProjectBuildGradle(config, (modConfig) => {
+    modConfig.modResults.contents = ensureCieloMavenRepository(modConfig.modResults.contents);
     return modConfig;
   });
 
