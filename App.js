@@ -121,25 +121,21 @@ const filterEntity = (entity, filter, sort, limit, skip) =>
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const getCompletionLocationString = async () => {
+const getCompletionLocation = async () => {
   try {
-    const servicesEnabled = await Location.hasServicesEnabledAsync();
-    if (!servicesEnabled) return '';
-
-    let permission = await Location.getForegroundPermissionsAsync();
-    if (!permission.granted) {
-      permission = await Location.requestForegroundPermissionsAsync();
-    }
-    if (!permission.granted) return '';
+    const permission = await Location.requestForegroundPermissionsAsync();
+    if (!permission.granted) return null;
 
     const position = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced
+      accuracy: Location.Accuracy.Balanced,
+      timeout: 10000
     });
-    const { latitude, longitude } = position.coords || {};
-    if (typeof latitude !== 'number' || typeof longitude !== 'number') return '';
-    return `${latitude},${longitude}`;
+    const coords = position.coords || {};
+    const { latitude, longitude } = coords;
+    if (typeof latitude !== 'number' || typeof longitude !== 'number') return null;
+    return { latitude, longitude };
   } catch {
-    return '';
+    return null;
   }
 };
 
@@ -584,17 +580,15 @@ function TaskItem({ item, operatorName, accessCode, company, onUpdated }) {
     try {
       const summary = collected.map((asset) => `${asset.asset_type}: ${asset.qty_collected} un.`).join('; ');
       const checkoutTime = new Date().toISOString();
-      const completionLocation = await getCompletionLocationString();
+      const completionLocation = await getCompletionLocation();
       const updatePayload = {
         status: DONE_STATUS,
         driver_status: DONE_STATUS,
         driver_notes: notes ? `${notes} | Recolhido: ${summary}` : `Recolhido: ${summary}`,
         driver_collected_assets: collected,
-        driver_checkout_time: checkoutTime
+        driver_checkout_time: checkoutTime,
+        driver_completion_location: completionLocation
       };
-      if (completionLocation) {
-        updatePayload.driver_completion_location = completionLocation;
-      }
 
       await updateEntity('ServiceOrder', item.id, updatePayload);
       await logAction(`Status -> ${DONE_STATUS}`, notes || summary);
@@ -984,20 +978,17 @@ function MinhaRotaScreen({ navigation, route }) {
   return (
     <View style={styles.routeScreen}>
       <View style={styles.compactHeader}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.compactHeaderRow}
-          style={styles.compactHeaderScroll}
-        >
+        <View style={styles.compactHeaderTopRow}>
           <Text style={styles.operatorName} numberOfLines={1}>{operatorName || '-'}</Text>
           <Text style={styles.compactCompanyBadge} numberOfLines={1}>{company || '-'}</Text>
+          <Button label="Sair" onPress={logout} variant="red" style={styles.compactExitButton} />
+        </View>
+        <View style={styles.compactHeaderStatsRow}>
           <CounterPill label="Ativas" value={active.length} color="#2563eb" />
           <CounterPill label="Feitas" value={completed.length} color="#16a34a" />
           <CounterPill label="Ocorrências" value={occurrences.length} color="#f97316" />
-        </ScrollView>
-        <Button label={loading ? '...' : 'Atualizar'} onPress={loadOrders} variant="outline" style={styles.compactRefreshButton} />
-        <Button label="Sair" onPress={logout} variant="red" style={styles.compactExitButton} />
+          <Button label={loading ? '...' : 'Atualizar'} onPress={loadOrders} variant="outline" style={styles.compactRefreshButton} />
+        </View>
       </View>
 
       <View style={styles.tabs}>
@@ -1204,67 +1195,80 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff'
   },
   compactHeader: {
-    minHeight: 64,
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: '100%',
+    alignSelf: 'stretch',
+    minHeight: 92,
     gap: 6,
-    paddingTop: 26,
-    paddingHorizontal: 10,
-    paddingBottom: 8,
+    paddingTop: 22,
+    paddingHorizontal: 8,
+    paddingBottom: 7,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
     backgroundColor: '#ffffff'
   },
-  compactHeaderScroll: {
-    flex: 1
-  },
-  compactHeaderRow: {
+  compactHeaderTopRow: {
+    width: '100%',
+    minWidth: 0,
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingRight: 4
+    justifyContent: 'space-between',
+    gap: 6
+  },
+  compactHeaderStatsRow: {
+    width: '100%',
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    gap: 3
   },
   operatorName: {
-    maxWidth: 110,
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 60,
     color: '#111827',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '900'
   },
   compactCompanyBadge: {
-    maxWidth: 100,
+    flexShrink: 1,
+    maxWidth: 116,
     overflow: 'hidden',
     color: '#c2410c',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900',
     backgroundColor: '#ffedd5',
     borderRadius: 7,
-    paddingHorizontal: 7,
+    paddingHorizontal: 6,
     paddingVertical: 4
   },
   counterPill: {
     minHeight: 28,
+    minWidth: 62,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    justifyContent: 'center',
+    gap: 2,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 7,
     backgroundColor: '#f8fafc',
-    paddingHorizontal: 7
+    paddingHorizontal: 5
   },
   counterPillValue: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '900'
   },
   counterPillLabel: {
     color: '#64748b',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800'
   },
   compactRefreshButton: {
-    width: 72,
+    width: 68,
     minHeight: 32,
     marginTop: 0,
-    paddingHorizontal: 4
+    paddingHorizontal: 2
   },
   compactExitButton: {
     width: 48,
