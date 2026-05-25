@@ -2,8 +2,16 @@ const { withAndroidManifest, withGradleProperties, withProjectBuildGradle } = re
 
 const CIELO_INTEGRATION_META_NAME = 'cs_integration_type';
 const CIELO_INTEGRATION_META_VALUE = 'uri';
+const ANDROID_TOOLS_NAMESPACE = 'http://schemas.android.com/tools';
+
+function ensureAndroidToolsNamespace(androidManifest) {
+  androidManifest.manifest.$ = androidManifest.manifest.$ || {};
+  androidManifest.manifest.$['xmlns:tools'] = androidManifest.manifest.$['xmlns:tools'] || ANDROID_TOOLS_NAMESPACE;
+}
 
 function ensureCieloIntegrationMetadata(androidManifest) {
+  ensureAndroidToolsNamespace(androidManifest);
+
   const application = androidManifest.manifest.application?.[0];
 
   if (!application) {
@@ -18,11 +26,13 @@ function ensureCieloIntegrationMetadata(androidManifest) {
 
   if (existingMetadata) {
     existingMetadata.$['android:value'] = CIELO_INTEGRATION_META_VALUE;
+    existingMetadata.$['tools:replace'] = 'android:value';
   } else {
     application['meta-data'].push({
       $: {
         'android:name': CIELO_INTEGRATION_META_NAME,
-        'android:value': CIELO_INTEGRATION_META_VALUE
+        'android:value': CIELO_INTEGRATION_META_VALUE,
+        'tools:replace': 'android:value'
       }
     });
   }

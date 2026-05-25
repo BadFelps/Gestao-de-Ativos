@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gestao Ativos",
     "slug": "gestao-ativos",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "gestaoativos",
@@ -38,7 +38,8 @@
     ],
     "android": {
       "package": "br.com.gestaoativos.app",
-      "versionCode": 21,
+      "versionCode": 22,
+      "icon": "./assets/icon.png",
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
@@ -47,17 +48,18 @@
         "ACCESS_COARSE_LOCATION"
       ],
       "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0f172a"
       }
     },
     "extra": {
-      "base44AppId": "",
-      "base44AppBaseUrl": "",
-      "base44FunctionsVersion": "",
+      "base44AppId": "69b984ecbe7402af99e141a5",
+      "base44AppBaseUrl": "https://base44.app",
+      "base44FunctionsVersion": "v3",
       "eas": {
-        "projectId": "ffe763c6-cb83-4eca-b238-44f65d92fd82"
+        "projectId": "ecdbf55e-3968-4428-abc0-cc214cf75d4b"
       }
     },
-    "owner": "badfelps"
+    "owner": "felpszap"
   }
 }
