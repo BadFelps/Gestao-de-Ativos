@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useAccess } from '@/lib/accessContext.jsx';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, Loader2, ChevronDown, ChevronUp, MessageSquare, Calendar, Package, XCircle, CheckCircle2 } from 'lucide-react';
-import { StatusBadge, PartialBadge } from '@/components/StatusBadge';
+import { PartialBadge } from '@/components/StatusBadge';
 import AssetsList from '@/components/AssetsList';
 import { toast } from 'sonner';
 import RetryAuthModal from './RetryAuthModal';

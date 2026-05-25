@@ -10,6 +10,7 @@ export default [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
       "src/Layout.jsx",
+      "App.js",
     ],
     ignores: ["src/lib/**/*", "src/components/ui/**/*"],
     ...pluginJs.configs.recommended,

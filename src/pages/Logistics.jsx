@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PanelAccessGate from '@/components/PanelAccessGate';
 import PanelTop from '@/components/PanelTop';
 import FunnelView from '@/components/logistics/FunnelView';
-import AssignCard from '@/components/logistics/AssignCard';
 import KanbanAssignCard from '@/components/logistics/KanbanAssignCard';
 import { StatusBadge, ActionBadge, PriorityBadge } from '@/components/StatusBadge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';

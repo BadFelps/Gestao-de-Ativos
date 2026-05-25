@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { useAccess } from '@/lib/accessContext';
-import { ArrowLeft, Wrench, DollarSign, PlayCircle, CheckCircle2, Eye, ZoomIn, ImageOff, ExternalLink } from 'lucide-react';
+import { ArrowLeft, DollarSign, PlayCircle, CheckCircle2, Eye, ZoomIn, ImageOff, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

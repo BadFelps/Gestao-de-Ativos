@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, Lock, ArrowLeft, Shield, Truck, MapPin, Package, BarChart3, Wrench, Settings, RotateCw } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Shield, Truck, MapPin, Package, BarChart3, Wrench, Settings, RotateCw } from 'lucide-react';
 
 const PANEL_ACCESS = {
   admin: '1234',

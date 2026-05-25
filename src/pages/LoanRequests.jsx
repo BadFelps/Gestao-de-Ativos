@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, ClipboardList, LogOut, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ClipboardList, LogOut } from 'lucide-react';
 import LoanCalendar from '@/components/loans/LoanCalendar';
 import LoanRequestsList from '@/components/loans/LoanRequestsList';
 

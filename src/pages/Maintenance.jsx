@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAccess } from '@/lib/accessContext';
-import { BarChart3, Shield, Wrench, ArrowRight, ArrowLeft, Lock, Truck, MapPin, Package, Settings, RotateCw } from 'lucide-react';
+import { BarChart3, Shield, Wrench, ArrowRight, ArrowLeft, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

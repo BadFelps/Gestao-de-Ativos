@@ -7,7 +7,7 @@ import CommercialCard from '@/components/commercial/CommercialCard';
 import OccurrencesTab from '@/components/commercial/OccurrencesTab';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, AlertTriangle, RefreshCw, Kanban, AlertCircle, BookOpen, BarChart2 } from 'lucide-react';
+import { Search, RefreshCw, Kanban, AlertCircle, BookOpen, BarChart2 } from 'lucide-react';
 import { useAccess } from '@/lib/accessContext';
 import PanelManual from '@/components/PanelManual';
 import CommercialDashboard from '@/components/commercial/CommercialDashboard';

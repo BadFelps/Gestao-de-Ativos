@@ -4,7 +4,7 @@ import { PriorityBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAccess } from '@/lib/accessContext.jsx';
-import { AlertTriangle, MessageSquare, Loader2, Calendar, RefreshCw, ChevronDown, ChevronUp, History, CheckCircle2, XCircle, Wrench } from 'lucide-react';
+import { AlertTriangle, MessageSquare, Loader2, Calendar, ChevronDown, ChevronUp, History, CheckCircle2, XCircle, Wrench } from 'lucide-react';
 import AssetsList from '@/components/AssetsList';
 import OSHistoryModal from '@/components/admin/OSHistoryModal';
 import { toast } from 'sonner';

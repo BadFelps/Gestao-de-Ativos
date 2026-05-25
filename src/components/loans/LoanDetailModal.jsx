@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { X, Edit2, CheckCircle2, XCircle, AlertCircle, Package, Truck, Loader2, Paperclip, ExternalLink, Trash2 } from 'lucide-react';
+import { X, Edit2, CheckCircle2, XCircle, AlertCircle, Loader2, Paperclip, ExternalLink, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import LoanFormModal from './LoanFormModal';
 

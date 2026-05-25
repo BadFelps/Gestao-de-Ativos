@@ -1,15 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  PieChart, Pie, LineChart, Line, CartesianGrid, Legend, AreaChart, Area
+  PieChart, Pie, CartesianGrid, Legend, AreaChart, Area
 } from 'recharts';
 import {
-  CheckCircle2, AlertTriangle, Clock, Truck, TrendingUp, Package,
-  Users, Activity, XCircle, RotateCcw, ChevronUp, ChevronDown, Award, Target
+  CheckCircle2, AlertTriangle, Clock, TrendingUp, Package,
+  Users, Activity, RotateCcw, ChevronUp, ChevronDown, Award
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format, subDays, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { format, subDays } from 'date-fns';
 
 const STATUS_COLORS = {
   'Aguardando': '#eab308',

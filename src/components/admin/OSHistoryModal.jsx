@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { X, Clock, Truck, User, Package, AlertTriangle, CheckCircle2, MapPin, MessageSquare, RotateCcw } from 'lucide-react';
+import { X, Clock, Truck, Package, AlertTriangle, CheckCircle2, MapPin, MessageSquare, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function fmt(dateStr) {

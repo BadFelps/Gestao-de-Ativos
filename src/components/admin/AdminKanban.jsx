@@ -5,7 +5,7 @@ import AssetsList from '@/components/AssetsList';
 import DeleteOrderModal from './DeleteOrderModal';
 import OSHistoryModal from './OSHistoryModal';
 import { Button } from '@/components/ui/button';
-import { History, Lock, User, MapPin, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Trash2, Package2, AlertCircle } from 'lucide-react';
+import { History, Lock, User, MapPin, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Trash2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

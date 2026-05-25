@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  PieChart, Pie, Legend,
 } from 'recharts';
 import { CheckCircle2, Wrench, TrendingUp, DollarSign, Users, AlertTriangle } from 'lucide-react';
 

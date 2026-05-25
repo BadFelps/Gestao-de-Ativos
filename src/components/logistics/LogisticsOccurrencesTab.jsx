@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import KanbanAssignCard from './KanbanAssignCard';
-import { CheckCircle2, AlertTriangle, MapPin } from 'lucide-react';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const OCCURRENCE_COLORS = {
   'Não deu tempo':      { bg: 'bg-red-50 border-red-200',    dot: 'bg-red-500',    text: 'text-red-700' },

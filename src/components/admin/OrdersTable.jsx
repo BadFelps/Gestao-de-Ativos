@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StatusBadge, PriorityBadge, ActionBadge, PartialBadge } from '@/components/StatusBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { FileText, User, ChevronDown, ChevronUp, MapPin, Phone, Package, Pencil, Lock, CheckCircle2 } from 'lucide-react';
+import { FileText, User, ChevronDown, ChevronUp, MapPin, Phone, Pencil, Lock, CheckCircle2 } from 'lucide-react';
 import AssetsList from '@/components/AssetsList';
 import { Button } from '@/components/ui/button';
 import EditOrderModal from './EditOrderModal';

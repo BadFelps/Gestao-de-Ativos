@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import { ChevronRight, BarChart3, Shield, Wrench, Truck, MapPin, Package, Settings, RotateCw, ShoppingBag } from 'lucide-react';
 import { useAccess } from '@/lib/accessContext';
 

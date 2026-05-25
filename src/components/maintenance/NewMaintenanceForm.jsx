@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { uploadToOneDrive } from '@/utils/uploadToOneDrive';
-import { Camera, Loader2, X, Search, CheckCircle2, ChevronDown } from 'lucide-react';
+import { Camera, Loader2, X, Search, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

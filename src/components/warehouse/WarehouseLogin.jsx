@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, ArrowLeft, Package } from 'lucide-react';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function WarehouseLogin({ onLogin }) {
   const navigate = useNavigate();

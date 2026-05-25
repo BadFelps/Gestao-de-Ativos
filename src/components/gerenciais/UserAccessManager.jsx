@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Trash2, Save, Plus } from 'lucide-react';
+import { Save, Plus } from 'lucide-react';
 
 const AVAILABLE_PANELS = [
   { key: 'admin', label: 'Administrativo' },

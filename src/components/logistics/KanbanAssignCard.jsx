@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PriorityBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
-import { UserPlus, MapPin, Loader2, MessageSquare, ChevronDown, ChevronUp, Package, Calendar } from 'lucide-react';
-import AssetsList from '@/components/AssetsList';
+import { UserPlus, MapPin, Loader2, MessageSquare, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 
 const PRIORITY_BORDER = {
   'Urgente': 'border-t-red-500',
