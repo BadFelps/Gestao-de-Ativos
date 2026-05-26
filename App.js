@@ -171,9 +171,40 @@ const normalizeReceiptAssets = (collected) => collected.map((asset) => ({
   numero_patrimonio: asset.patrimonio || asset.plaqueta || asset.expected_patrimonio || ''
 }));
 
+const parseReceiptAssets = (assets) => {
+  if (Array.isArray(assets)) return assets;
+  if (typeof assets !== 'string' || !assets.trim()) return [];
+
+  try {
+    const parsed = JSON.parse(assets);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const receiptString = (value) => (value === undefined || value === null ? '' : String(value));
+
+const serializeReceiptForBase44 = (receipt) => {
+  const assets = parseReceiptAssets(receipt.ativos_devolvidos);
+
+  return {
+    numero_comprovante: receiptString(receipt.numero_comprovante),
+    tarefa_id: receiptString(receipt.tarefa_id),
+    cliente_nome: receiptString(receipt.cliente_nome),
+    cliente_endereco: receiptString(receipt.cliente_endereco),
+    codigo_pdv: receiptString(receipt.codigo_pdv),
+    motorista_nome: receiptString(receipt.motorista_nome),
+    empresa: receiptString(receipt.empresa),
+    ativos_devolvidos: JSON.stringify(assets),
+    data_hora: receiptString(receipt.data_hora),
+    status: receiptString(receipt.status)
+  };
+};
+
 const buildReceiptText = (receipt, copyLabel) => {
   const { date, time } = formatReceiptDateTime(new Date(receipt.data_hora));
-  const assetsText = (receipt.ativos_devolvidos || [])
+  const assetsText = parseReceiptAssets(receipt.ativos_devolvidos)
     .map((asset) => {
       const patrimonyValue = String(asset.numero_patrimonio || '');
       const patrimony = patrimonyValue
@@ -607,7 +638,7 @@ function TaskItem({ item, operatorName, accessCode, company, onUpdated }) {
           data_hora: checkoutTime,
           status: 'emitido'
         };
-        await createEntity('Comprovante', receipt);
+        await createEntity('Comprovante', serializeReceiptForBase44(receipt));
         try {
           await printReceiptCopies(receipt);
         } catch (printErr) {

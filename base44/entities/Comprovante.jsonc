@@ -26,21 +26,8 @@
       "type": "string"
     },
     "ativos_devolvidos": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "nome": {
-            "type": "string"
-          },
-          "quantidade": {
-            "type": "number"
-          },
-          "numero_patrimonio": {
-            "type": "string"
-          }
-        }
-      }
+      "type": "string",
+      "description": "JSON string com os ativos devolvidos"
     },
     "data_hora": {
       "type": "string"
