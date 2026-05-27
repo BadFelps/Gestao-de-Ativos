@@ -165,8 +165,25 @@ const formatReceiptDateTime = (date = new Date()) => {
   };
 };
 
+const formatReceiptAssetName = (asset) => {
+  const type = String(asset.asset_type || 'Ativo').trim();
+  const brand = String(asset.asset_brand || '').trim();
+  return brand ? `${type} - ${brand}` : type;
+};
+
+const getReceiptCev = (order, assets = []) => {
+  const values = [
+    order?.asset_cev,
+    ...assets.map((asset) => asset?.asset_cev)
+  ]
+    .map((value) => String(value || '').trim())
+    .filter(Boolean);
+
+  return [...new Set(values)].join(', ');
+};
+
 const normalizeReceiptAssets = (collected) => collected.map((asset) => ({
-  nome: asset.asset_type || 'Ativo',
+  nome: formatReceiptAssetName(asset),
   quantidade: asset.qty_collected || 1,
   numero_patrimonio: asset.patrimonio || asset.plaqueta || asset.expected_patrimonio || ''
 }));
@@ -204,6 +221,7 @@ const serializeReceiptForBase44 = (receipt) => {
 
 const buildReceiptText = (receipt, copyLabel) => {
   const { date, time } = formatReceiptDateTime(new Date(receipt.data_hora));
+  const cev = receiptString(receipt.asset_cev).trim();
   const assetsText = parseReceiptAssets(receipt.ativos_devolvidos)
     .map((asset) => {
       const patrimonyValue = String(asset.numero_patrimonio || '');
@@ -228,6 +246,7 @@ const buildReceiptText = (receipt, copyLabel) => {
     `CLIENTE: ${receipt.cliente_nome || '-'}`,
     `Endereco: ${receipt.cliente_endereco || '-'}`,
     `PDV: ${receipt.codigo_pdv || '-'}`,
+    ...(cev ? [`CEV: ${cev}`] : []),
     '',
     `MOTORISTA: ${receipt.motorista_nome || '-'}`,
     `Empresa: ${receipt.empresa || '-'}`,
@@ -592,6 +611,7 @@ function TaskItem({ item, operatorName, accessCode, company, onUpdated }) {
       return {
         asset_type: asset.asset_type || 'Ativo',
         asset_brand: asset.asset_brand || '',
+        asset_cev: asset.asset_cev || '',
         qty_collected: value.qty || asset.quantity || 1,
         plaqueta: value.plaqueta || '',
         patrimonio: value.plaqueta || '',
@@ -632,6 +652,7 @@ function TaskItem({ item, operatorName, accessCode, company, onUpdated }) {
           cliente_nome: item.client_name || '',
           cliente_endereco: item.client_address || '',
           codigo_pdv: item.client_code || '',
+          asset_cev: getReceiptCev(item, assets),
           motorista_nome: operatorName || '',
           empresa: company || item.revenda || '',
           ativos_devolvidos: normalizeReceiptAssets(collected),
@@ -756,6 +777,11 @@ function TaskItem({ item, operatorName, accessCode, company, onUpdated }) {
 
   return (
     <View style={styles.taskCard}>
+      {item.priority === 'Urgente' ? (
+        <View style={styles.urgentBadge}>
+          <Text style={styles.urgentBadgeText}>URGENTE</Text>
+        </View>
+      ) : null}
       <TouchableOpacity activeOpacity={0.9} onPress={() => setExpanded((value) => !value)}>
       <View style={styles.taskHeader}>
         <View style={styles.taskTitleWrap}>
@@ -1458,13 +1484,30 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#ffffff',
     padding: 14,
-    marginBottom: 10
+    marginBottom: 10,
+    position: 'relative'
+  },
+  urgentBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 2,
+    backgroundColor: '#dc2626',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5
+  },
+  urgentBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '900'
   },
   taskHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
-    marginBottom: 8
+    marginBottom: 8,
+    paddingRight: 84
   },
   taskTitleWrap: {
     flex: 1

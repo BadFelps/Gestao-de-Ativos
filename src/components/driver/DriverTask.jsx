@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StatusBadge, ActionBadge, PriorityBadge } from '@/components/StatusBadge';
+import { StatusBadge, ActionBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import { MapPin, CheckCircle2, AlertTriangle, Camera, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import AssetsList from '@/components/AssetsList';
@@ -131,9 +131,14 @@ export default function DriverTask({ order, onUpdated }) {
   const isActive = ['Atribuído', 'No Cliente', 'Em Rota'].includes(order.status);
 
   return (
-    <Card className={`overflow-hidden transition-all ${isActive ? 'border-primary/30 shadow-sm' : 'opacity-70'}`}>
+    <Card className={`relative overflow-hidden transition-all ${isActive ? 'border-primary/30 shadow-sm' : 'opacity-70'}`}>
+      {order.priority === 'Urgente' && (
+        <span className="absolute right-3 top-3 z-10 rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-black tracking-wide text-white shadow-sm">
+          URGENTE
+        </span>
+      )}
       <div className="p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <StatusBadge status={order.status} />
@@ -142,9 +147,8 @@ export default function DriverTask({ order, onUpdated }) {
             {order.client_address && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" />{order.client_address}</p>}
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex gap-1">
+            <div className={`flex gap-1 ${order.priority === 'Urgente' ? 'pr-20' : ''}`}>
               <ActionBadge action={order.action_type} />
-              <PriorityBadge priority={order.priority} />
             </div>
             {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
           </div>
