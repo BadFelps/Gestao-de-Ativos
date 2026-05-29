@@ -527,6 +527,15 @@ const OCCURRENCE_REASONS = [
   'Respons\u00e1vel Ausente',
   'N\u00e3o deu tempo'
 ];
+const OVERTIME_REASONS = [
+  'Atraso em Rota',
+  'Quebra de caminh\u00e3o',
+  'Condi\u00e7\u00f5es clim\u00e1ticas',
+  'Evitar Pernoite',
+  'Estrada em m\u00e1 condi\u00e7\u00e3o',
+  'Outros'
+];
+const OVERTIME_REASONS_WITH_DESCRIPTION = ['Atraso em Rota', 'Outros'];
 
 function TaskItem({ item, operatorName, accessCode, company, onUpdated }) {
   const [expanded, setExpanded] = useState(false);
@@ -983,8 +992,11 @@ function MinhaRotaScreen({ navigation, route }) {
   const [overtimeLoading, setOvertimeLoading] = useState(false);
   const [overtimeError, setOvertimeError] = useState('');
   const [overtimeSuccess, setOvertimeSuccess] = useState('');
-  const [overtimeHours, setOvertimeHours] = useState('');
+  const [overtimeHoursInput, setOvertimeHoursInput] = useState('');
+  const [overtimeMinutesInput, setOvertimeMinutesInput] = useState('');
   const [overtimeReason, setOvertimeReason] = useState('');
+  const [overtimeReasonDescription, setOvertimeReasonDescription] = useState('');
+  const [overtimeReasonPickerOpen, setOvertimeReasonPickerOpen] = useState(false);
   const [overtimeSubmitting, setOvertimeSubmitting] = useState(false);
 
   const loadOrders = useCallback(async () => {
@@ -1038,9 +1050,12 @@ function MinhaRotaScreen({ navigation, route }) {
     }
   }, [activeTab, loadOvertimeRequest]);
 
+  const overtimeRequiresDescription = OVERTIME_REASONS_WITH_DESCRIPTION.includes(overtimeReason);
+
   const handleOvertimeSubmit = async () => {
-    const normalizedHours = Number.parseFloat(String(overtimeHours).replace(',', '.'));
-    if (!Number.isFinite(normalizedHours) || normalizedHours <= 0) {
+    const hours = Number.parseInt(overtimeHoursInput || '0', 10);
+    const minutes = Number.parseInt(overtimeMinutesInput || '0', 10);
+    if (hours + minutes <= 0) {
       setOvertimeError('Informe a quantidade de horas extras necessarias.');
       return;
     }
@@ -1048,6 +1063,18 @@ function MinhaRotaScreen({ navigation, route }) {
       setOvertimeError('Informe o motivo da solicitacao.');
       return;
     }
+    if (overtimeRequiresDescription && !overtimeReasonDescription.trim()) {
+      Alert.alert('Por favor, descreva o motivo.');
+      return;
+    }
+
+    const normalizedHours = [
+      hours > 0 ? `${hours}h` : '',
+      minutes > 0 ? `${minutes}min` : ''
+    ].filter(Boolean).join(' ');
+    const normalizedReason = overtimeRequiresDescription
+      ? `${overtimeReason} \u2014 ${overtimeReasonDescription.trim()}`
+      : overtimeReason.trim();
 
     setOvertimeSubmitting(true);
     setOvertimeError('');
@@ -1057,7 +1084,7 @@ function MinhaRotaScreen({ navigation, route }) {
         motorista_nome: operatorName || '',
         empresa: company || '',
         horas_extras: normalizedHours,
-        motivo: overtimeReason.trim(),
+        motivo: normalizedReason,
         status: 'Pendente',
         data_solicitacao: new Date().toISOString()
       });
@@ -1065,12 +1092,14 @@ function MinhaRotaScreen({ navigation, route }) {
         motorista_nome: operatorName || '',
         empresa: company || '',
         horas_extras: normalizedHours,
-        motivo: overtimeReason.trim(),
+        motivo: normalizedReason,
         status: 'Pendente',
         data_solicitacao: new Date().toISOString()
       });
-      setOvertimeHours('');
+      setOvertimeHoursInput('');
+      setOvertimeMinutesInput('');
       setOvertimeReason('');
+      setOvertimeReasonDescription('');
       setOvertimeSuccess('Solicitacao enviada com sucesso.');
       await loadOvertimeRequest();
     } catch (err) {
@@ -1198,33 +1227,108 @@ function MinhaRotaScreen({ navigation, route }) {
 
           <Text style={styles.overtimeTitle}>{'Nova solicita\u00e7\u00e3o'}</Text>
           <Text style={styles.label}>{'Horas extras necess\u00e1rias'}</Text>
-          <TextInput
-            value={overtimeHours}
-            onChangeText={(value) => {
-              setOvertimeHours(value);
-              setOvertimeError('');
-              setOvertimeSuccess('');
-            }}
-            keyboardType="numeric"
-            placeholder="Ex.: 2"
-            placeholderTextColor="#94a3b8"
-            style={styles.input}
-          />
+          <View style={styles.overtimeTimeRow}>
+            <View style={styles.overtimeTimeField}>
+              <Text style={styles.overtimeTimeLabel}>Horas</Text>
+              <TextInput
+                value={overtimeHoursInput}
+                onChangeText={(value) => {
+                  setOvertimeHoursInput(value.replace(/\D/g, ''));
+                  setOvertimeError('');
+                  setOvertimeSuccess('');
+                }}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor="#94a3b8"
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.overtimeTimeField}>
+              <Text style={styles.overtimeTimeLabel}>Minutos</Text>
+              <TextInput
+                value={overtimeMinutesInput}
+                onChangeText={(value) => {
+                  const digits = value.replace(/\D/g, '');
+                  const numericValue = Number.parseInt(digits || '0', 10);
+                  setOvertimeMinutesInput(digits ? String(Math.min(numericValue, 59)) : '');
+                  setOvertimeError('');
+                  setOvertimeSuccess('');
+                }}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor="#94a3b8"
+                style={styles.input}
+              />
+            </View>
+          </View>
 
           <Text style={styles.label}>Motivo</Text>
-          <TextInput
-            value={overtimeReason}
-            onChangeText={(value) => {
-              setOvertimeReason(value);
-              setOvertimeError('');
-              setOvertimeSuccess('');
-            }}
-            multiline
-            textAlignVertical="top"
-            placeholder="Descreva o motivo"
-            placeholderTextColor="#94a3b8"
-            style={[styles.input, styles.overtimeReasonInput]}
-          />
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setOvertimeReasonPickerOpen(true)}
+            style={styles.reasonDropdown}
+          >
+            <Text style={[styles.reasonDropdownText, !overtimeReason && styles.reasonDropdownPlaceholder]}>
+              {overtimeReason || 'Selecione o motivo'}
+            </Text>
+            <Text style={styles.reasonDropdownIcon}>v</Text>
+          </TouchableOpacity>
+          {overtimeRequiresDescription ? (
+            <>
+              <Text style={styles.label}>Descreva o motivo</Text>
+              <TextInput
+                value={overtimeReasonDescription}
+                onChangeText={(value) => {
+                  setOvertimeReasonDescription(value);
+                  setOvertimeError('');
+                  setOvertimeSuccess('');
+                }}
+                multiline
+                textAlignVertical="top"
+                placeholder="Descreva o motivo"
+                placeholderTextColor="#94a3b8"
+                style={[styles.input, styles.overtimeReasonInput]}
+              />
+            </>
+          ) : null}
+          <Modal
+            visible={overtimeReasonPickerOpen}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setOvertimeReasonPickerOpen(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => setOvertimeReasonPickerOpen(false)}
+              style={styles.modalOverlay}
+            >
+              <View style={styles.reasonModal}>
+                <Text style={styles.reasonModalTitle}>Motivo</Text>
+                {OVERTIME_REASONS.map((reason) => (
+                  <TouchableOpacity
+                    key={reason}
+                    onPress={() => {
+                      setOvertimeReason(reason);
+                      if (!OVERTIME_REASONS_WITH_DESCRIPTION.includes(reason)) {
+                        setOvertimeReasonDescription('');
+                      }
+                      setOvertimeError('');
+                      setOvertimeSuccess('');
+                      setOvertimeReasonPickerOpen(false);
+                    }}
+                    style={styles.reasonOption}
+                  >
+                    <Text style={[
+                      styles.reasonOptionText,
+                      overtimeReason === reason && styles.reasonOptionTextActive
+                    ]}>
+                      {reason}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
           <Button
             label={overtimeSubmitting ? 'Solicitando...' : 'Solicitar'}
@@ -2013,6 +2117,20 @@ const styles = StyleSheet.create({
   overtimeRefreshButton: {
     marginTop: 0,
     marginBottom: 20
+  },
+  overtimeTimeRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 2
+  },
+  overtimeTimeField: {
+    flex: 1
+  },
+  overtimeTimeLabel: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 6
   },
   overtimeReasonInput: {
     minHeight: 116,
