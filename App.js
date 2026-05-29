@@ -979,6 +979,13 @@ function MinhaRotaScreen({ navigation, route }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [overtimeRequest, setOvertimeRequest] = useState(null);
+  const [overtimeLoading, setOvertimeLoading] = useState(false);
+  const [overtimeError, setOvertimeError] = useState('');
+  const [overtimeSuccess, setOvertimeSuccess] = useState('');
+  const [overtimeHours, setOvertimeHours] = useState('');
+  const [overtimeReason, setOvertimeReason] = useState('');
+  const [overtimeSubmitting, setOvertimeSubmitting] = useState(false);
 
   const loadOrders = useCallback(async () => {
     if (!operatorName) {
@@ -1001,6 +1008,77 @@ function MinhaRotaScreen({ navigation, route }) {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  const loadOvertimeRequest = useCallback(async () => {
+    if (!operatorName || !company) {
+      setOvertimeRequest(null);
+      return;
+    }
+
+    setOvertimeLoading(true);
+    setOvertimeError('');
+    try {
+      const data = await filterEntity(
+        'SolicitacaoHoraExtra',
+        { motorista_nome: operatorName, empresa: company },
+        '-data_solicitacao',
+        1
+      );
+      setOvertimeRequest(data?.[0] || null);
+    } catch (err) {
+      setOvertimeError(err.message);
+    } finally {
+      setOvertimeLoading(false);
+    }
+  }, [company, operatorName]);
+
+  useEffect(() => {
+    if (activeTab === 'horaExtra') {
+      loadOvertimeRequest();
+    }
+  }, [activeTab, loadOvertimeRequest]);
+
+  const handleOvertimeSubmit = async () => {
+    const normalizedHours = Number.parseFloat(String(overtimeHours).replace(',', '.'));
+    if (!Number.isFinite(normalizedHours) || normalizedHours <= 0) {
+      setOvertimeError('Informe a quantidade de horas extras necessarias.');
+      return;
+    }
+    if (!overtimeReason.trim()) {
+      setOvertimeError('Informe o motivo da solicitacao.');
+      return;
+    }
+
+    setOvertimeSubmitting(true);
+    setOvertimeError('');
+    setOvertimeSuccess('');
+    try {
+      const created = await createEntity('SolicitacaoHoraExtra', {
+        motorista_nome: operatorName || '',
+        empresa: company || '',
+        horas_extras: normalizedHours,
+        motivo: overtimeReason.trim(),
+        status: 'Pendente',
+        data_solicitacao: new Date().toISOString()
+      });
+      setOvertimeRequest(created || {
+        motorista_nome: operatorName || '',
+        empresa: company || '',
+        horas_extras: normalizedHours,
+        motivo: overtimeReason.trim(),
+        status: 'Pendente',
+        data_solicitacao: new Date().toISOString()
+      });
+      setOvertimeHours('');
+      setOvertimeReason('');
+      setOvertimeSuccess('Solicitacao enviada com sucesso.');
+      await loadOvertimeRequest();
+    } catch (err) {
+      setOvertimeError(err.message);
+    } finally {
+      setOvertimeSubmitting(false);
+    }
+  };
 
   const today = todayIso();
   const matchesDate = useCallback((order) => (
@@ -1056,22 +1134,104 @@ function MinhaRotaScreen({ navigation, route }) {
           <Text style={[styles.tabText, activeTab === 'rota' && styles.activeTabText]}>Minha Rota</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'manual' && styles.activeTab]}
-          onPress={() => setActiveTab('manual')}
+          style={[styles.tabButton, activeTab === 'horaExtra' && styles.activeTab]}
+          onPress={() => setActiveTab('horaExtra')}
         >
-          <Text style={[styles.tabText, activeTab === 'manual' && styles.activeTabText]}>{'Instru\u00e7\u00f5es'}</Text>
+          <Text style={[styles.tabText, activeTab === 'horaExtra' && styles.activeTabText]}>Hora Extra</Text>
         </TouchableOpacity>
       </View>
 
-      {activeTab === 'manual' ? (
-        <ScrollView style={styles.content} contentContainerStyle={styles.manualContent}>
-          <Text style={styles.manualTitle}>{'Instru\u00e7\u00f5es'}</Text>
-          <Text style={styles.manualText}>{'Ao concluir cada recolhimento que est\u00e1 atribu\u00eddo \u00e0 sua rota, preencha as informa\u00e7\u00f5es corretamente na aba Minha Rota.'}</Text>
-          <Text style={styles.manualText}>{'\u2022 N\u00e3o realizar recolha parcial;'}</Text>
-          <Text style={styles.manualText}>{'\u2022 N\u00e3o recolher material diferente do informado em Minha Rota;'}</Text>
-          <Text style={styles.manualText}>{'\u2022 N\u00e3o recolher material quebrado;'}</Text>
-          <Text style={styles.manualText}>{'Deve-se seguir as regras acima, caso contr\u00e1rio, somente com autoriza\u00e7\u00e3o do(a) Supervisor(a) de Log\u00edstica.'}</Text>
-          <Text style={styles.manualText}>{'Qualquer d\u00favida ou sugest\u00e3o de melhoria, entre em contato com o seu supervisor.'}</Text>
+      {activeTab === 'horaExtra' ? (
+        <ScrollView style={styles.content} contentContainerStyle={styles.overtimeContent}>
+          <Text style={styles.overtimeTitle}>{'Status da \u00faltima solicita\u00e7\u00e3o'}</Text>
+
+          <View style={styles.overtimeCard}>
+            {overtimeLoading ? (
+              <Text style={styles.mutedText}>{'Carregando solicita\u00e7\u00e3o...'}</Text>
+            ) : overtimeRequest ? (
+              <>
+                <View style={[
+                  styles.overtimeBadge,
+                  overtimeRequest.status === 'Aprovado' && styles.overtimeBadgeApproved,
+                  overtimeRequest.status === 'Recusado' && styles.overtimeBadgeRejected
+                ]}>
+                  <Text style={[
+                    styles.overtimeBadgeText,
+                    overtimeRequest.status === 'Aprovado' && styles.overtimeBadgeTextApproved,
+                    overtimeRequest.status === 'Recusado' && styles.overtimeBadgeTextRejected
+                  ]}>
+                    {overtimeRequest.status === 'Aprovado'
+                      ? '\u2705 Aprovado'
+                      : overtimeRequest.status === 'Recusado'
+                        ? '\u274c Recusado'
+                        : 'Pendente'}
+                  </Text>
+                </View>
+                <Text style={styles.overtimeInfoLabel}>Horas solicitadas</Text>
+                <Text style={styles.overtimeInfoValue}>{overtimeRequest.horas_extras || '-'}</Text>
+                <Text style={styles.overtimeInfoLabel}>Motivo</Text>
+                <Text style={styles.overtimeInfoValue}>{overtimeRequest.motivo || '-'}</Text>
+                {overtimeRequest.observacao_supervisor || overtimeRequest.supervisor_observacao || overtimeRequest.observacao ? (
+                  <>
+                    <Text style={styles.overtimeInfoLabel}>{'Observa\u00e7\u00e3o do supervisor'}</Text>
+                    <Text style={styles.overtimeInfoValue}>
+                      {overtimeRequest.observacao_supervisor || overtimeRequest.supervisor_observacao || overtimeRequest.observacao}
+                    </Text>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <Text style={styles.emptyText}>{'Nenhuma solicita\u00e7\u00e3o encontrada'}</Text>
+            )}
+          </View>
+
+          {overtimeError ? <Text style={styles.routeErrorText}>{overtimeError}</Text> : null}
+          {overtimeSuccess ? <Text style={styles.successText}>{overtimeSuccess}</Text> : null}
+
+          <Button
+            label={overtimeLoading ? 'Atualizando...' : 'Atualizar status'}
+            onPress={loadOvertimeRequest}
+            variant="outline"
+            disabled={overtimeLoading}
+            style={styles.overtimeRefreshButton}
+          />
+
+          <Text style={styles.overtimeTitle}>{'Nova solicita\u00e7\u00e3o'}</Text>
+          <Text style={styles.label}>{'Horas extras necess\u00e1rias'}</Text>
+          <TextInput
+            value={overtimeHours}
+            onChangeText={(value) => {
+              setOvertimeHours(value);
+              setOvertimeError('');
+              setOvertimeSuccess('');
+            }}
+            keyboardType="numeric"
+            placeholder="Ex.: 2"
+            placeholderTextColor="#94a3b8"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Motivo</Text>
+          <TextInput
+            value={overtimeReason}
+            onChangeText={(value) => {
+              setOvertimeReason(value);
+              setOvertimeError('');
+              setOvertimeSuccess('');
+            }}
+            multiline
+            textAlignVertical="top"
+            placeholder="Descreva o motivo"
+            placeholderTextColor="#94a3b8"
+            style={[styles.input, styles.overtimeReasonInput]}
+          />
+
+          <Button
+            label={overtimeSubmitting ? 'Solicitando...' : 'Solicitar'}
+            onPress={handleOvertimeSubmit}
+            variant="green"
+            disabled={overtimeSubmitting}
+          />
         </ScrollView>
       ) : (
         <View style={styles.content}>
@@ -1428,6 +1588,12 @@ const styles = StyleSheet.create({
   routeErrorText: {
     color: '#dc2626',
     fontSize: 13,
+    marginBottom: 10
+  },
+  successText: {
+    color: '#047857',
+    fontSize: 13,
+    fontWeight: '800',
     marginBottom: 10
   },
   counterRow: {
@@ -1789,6 +1955,68 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     lineHeight: 18
+  },
+  overtimeContent: {
+    paddingBottom: 28
+  },
+  overtimeTitle: {
+    color: '#111827',
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 12
+  },
+  overtimeCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    padding: 14,
+    marginBottom: 12
+  },
+  overtimeBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 12
+  },
+  overtimeBadgeApproved: {
+    backgroundColor: '#dcfce7'
+  },
+  overtimeBadgeRejected: {
+    backgroundColor: '#fee2e2'
+  },
+  overtimeBadgeText: {
+    color: '#92400e',
+    fontSize: 12,
+    fontWeight: '900'
+  },
+  overtimeBadgeTextApproved: {
+    color: '#166534'
+  },
+  overtimeBadgeTextRejected: {
+    color: '#991b1b'
+  },
+  overtimeInfoLabel: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 8
+  },
+  overtimeInfoValue: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 3
+  },
+  overtimeRefreshButton: {
+    marginTop: 0,
+    marginBottom: 20
+  },
+  overtimeReasonInput: {
+    minHeight: 116,
+    paddingTop: 12
   },
   manualContent: {
     paddingBottom: 28
